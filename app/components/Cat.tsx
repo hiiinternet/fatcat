@@ -3,27 +3,24 @@
 /**
  * Le Chaton Fat — the pixel sprite cat.
  *
- * Renders one frame of the 5x2 fatness sheet (public/sprites/cat-fatness-normalized.png)
- * as a CSS background-image — chosen by `fat` (0 skinny -> 9 chonky). Using a
- * background-image (not an <img>) means no loading-placeholder box flashes in on
- * refresh. Crown appears at the final stage.
+ * Renders the clean transparent sprite (public/sprites/cat.png) as a CSS
+ * background-image (no <img>, so no loading-box flash). Skinny → chonky is done
+ * by squishing it narrower at low `fat` and letting the parent scale handle size.
+ * Crown appears at the final stage.
+ *
+ * (The 5x2 fatness sheet is unused — its source was exported without real
+ * transparency, so its background couldn't be keyed out cleanly.)
  */
 
-export const COLS = 5;
-export const ROWS = 2;
-export const FRAME_COUNT = COLS * ROWS;
-
-const SHEET = "/sprites/cat-fatness-normalized.png";
+const SPRITE = "/sprites/cat.png";
 const TILE = 232;
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 export default function Cat({ fat = 0, stageIndex = 0 }: { fat?: number; stageIndex?: number }) {
   const f = Math.max(0, Math.min(1, fat));
   const glow = stageIndex >= 4;
   const crowned = stageIndex >= 7;
-
-  const frame = Math.round(f * (FRAME_COUNT - 1));
-  const col = frame % COLS;
-  const row = Math.floor(frame / COLS);
+  const squish = lerp(0.72, 1, f); // slimmer when skinny, full when chonky
 
   return (
     <div className="animate-breathe" style={{ position: "relative", width: TILE, height: TILE }}>
@@ -58,11 +55,13 @@ export default function Cat({ fat = 0, stageIndex = 0 }: { fat?: number; stageIn
         style={{
           width: TILE,
           height: TILE,
-          backgroundImage: `url(${SHEET})`,
-          backgroundSize: `${TILE * COLS}px ${TILE * ROWS}px`,
-          backgroundPosition: `${-col * TILE}px ${-row * TILE}px`,
+          backgroundImage: `url(${SPRITE})`,
+          backgroundSize: "contain",
+          backgroundPosition: "center bottom",
           backgroundRepeat: "no-repeat",
           imageRendering: "pixelated",
+          transform: `scaleX(${squish})`,
+          transformOrigin: "center bottom",
         }}
       />
     </div>
