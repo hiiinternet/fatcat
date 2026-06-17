@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #faf1e2;
+  --color-paper: #fffdf8;
+  --color-ink: #3a2417;
+  --color-muted: #9a7c63;
+  --color-line: #e2c9a8;
+  --color-wood: #6b3f23;
+  --color-orange: #ff7a1a;
+  --color-orange-soft: #ffa052;
+  --color-ember: #e0480d;
+  --color-amber: #ffb24d;
+  --color-rose: #e98aa0;
+  --color-grape: #3a2b52;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: var(--font-pixel-src), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+html,
+body {
+  background-color: #e9c9b6;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.font-pixel {
+  font-family: var(--font-pixel);
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Game frame (the chunky pixel-ish panel) --------------------------- */
+.gframe {
+  background: rgba(255, 250, 240, 0.95);
+  border: 3px solid var(--color-wood);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 255, 255, 0.65),
+    inset 0 -6px 0 rgba(107, 63, 35, 0.12),
+    0 6px 0 rgba(107, 63, 35, 0.25),
+    0 14px 30px rgba(58, 36, 23, 0.3);
+}
+.gframe-soft {
+  background: rgba(255, 250, 240, 0.92);
+  border: 2px solid var(--color-line);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), 0 2px 0 rgba(107, 63, 35, 0.12);
+}
+
+/* ---- Chunky game buttons ---------------------------------------------- */
+.gbtn {
+  background: linear-gradient(180deg, var(--color-orange-soft), var(--color-orange));
+  color: #fff;
+  border: 3px solid #7a2e00;
+  border-radius: 14px;
+  box-shadow: 0 5px 0 #b53d00, inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  text-shadow: 0 1px 0 rgba(122, 46, 0, 0.4);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.gbtn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #b53d00, inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+.gbtn:disabled {
+  filter: grayscale(0.4) brightness(0.96);
+  opacity: 0.65;
+}
+
+.gbtn-ghost {
+  background: rgba(255, 250, 240, 0.95);
+  color: var(--color-wood);
+  border: 3px solid var(--color-wood);
+  border-radius: 12px;
+  box-shadow: 0 4px 0 rgba(107, 63, 35, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.gbtn-ghost:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(107, 63, 35, 0.3);
+}
+
+/* ---- Shop / list rows -------------------------------------------------- */
+.grow-item {
+  background: rgba(255, 247, 234, 0.95);
+  border: 2px solid var(--color-line);
+  border-radius: 12px;
+  transition: transform 0.06s ease, border-color 0.1s ease;
+}
+.grow-item:not(:disabled):hover {
+  border-color: var(--color-orange);
+}
+.grow-item:not(:disabled):active {
+  transform: translateY(2px);
+}
+.grow-item:disabled {
+  opacity: 0.6;
+}
+
+/* ---- Tabs -------------------------------------------------------------- */
+.gtab {
+  border-radius: 10px;
+  border: 2px solid var(--color-wood);
+  background: rgba(255, 250, 240, 0.9);
+  color: var(--color-wood);
+  box-shadow: 0 3px 0 rgba(107, 63, 35, 0.25);
+  transition: transform 0.06s ease;
+}
+.gtab:active {
+  transform: translateY(2px);
+}
+.gtab[data-active="true"] {
+  background: var(--color-wood);
+  color: #fff7ec;
+}
+
+.gchip {
+  background: rgba(255, 250, 240, 0.85);
+  border: 2px solid var(--color-line);
+  border-radius: 999px;
+}
+
+/* ---- Keyframes --------------------------------------------------------- */
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-0.4deg); }
+  20%, 80% { transform: translate3d(2px, 0, 0) rotate(0.4deg); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-0.8deg); }
+  40%, 60% { transform: translate3d(4px, 0, 0) rotate(0.8deg); }
+}
+@keyframes tail-wag { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
+@keyframes bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -7px); } }
+/* opacity-only glow pulse (compositor-friendly, unlike animating box-shadow) */
+@keyframes glow-pulse { 0%, 100% { opacity: 0; } 50% { opacity: 0.85; } }
+
+.animate-breathe { animation: breathe 3.6s ease-in-out infinite; }
+.animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
+.bobber { animation: bob 1.6s ease-in-out infinite; }
+
+.feed-cta { position: relative; isolation: isolate; }
+.feed-cta::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border-radius: 18px;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(255, 122, 26, 0.6), transparent 75%);
+  filter: blur(9px);
+  opacity: 0;
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
+/* Respect reduced-motion: kill ambient CSS animation + collapse transitions */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* slim / hidden scrollbars */
+.hide-scrollbar { scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+.pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
+.live-dot { box-shadow: 0 0 0 0 rgba(255,122,26,0.5); animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(255,122,26,0.5); } 70% { box-shadow: 0 0 0 7px rgba(255,122,26,0); } 100% { box-shadow: 0 0 0 0 rgba(255,122,26,0); } }
