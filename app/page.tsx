@@ -358,6 +358,10 @@ export default function LeChatonFat() {
     return `+${amount.toFixed(1)} bench pts`;
   };
   const shopList = UPGRADES.filter((u) => peak >= revealOf(u)).sort((a, b) => a.baseCost - b.baseCost);
+  // mobile quick-buy: cheapest upgrades you can afford right now (no sheet needed)
+  const quickBuys = UPGRADES.filter((u) => peak >= revealOf(u) && parameters >= costOf(u.baseCost, owned[u.id] || 0))
+    .sort((a, b) => costOf(a.baseCost, owned[a.id] || 0) - costOf(b.baseCost, owned[b.id] || 0))
+    .slice(0, 3);
 
   const upgradesInner = (
     <div className="hide-scrollbar min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
@@ -564,6 +568,20 @@ export default function LeChatonFat() {
 
       {/* ===== Bottom controls (container is click-through; only the controls catch events) ===== */}
       <motion.div {...ENTER.bottom} transition={{ ...SPRING.balanced, delay: 0.1 }} className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex flex-col items-center gap-2 px-3 pb-3">
+        {/* mobile quick-buy — the cheapest affordable upgrades, no sheet needed */}
+        {quickBuys.length > 0 && (
+          <div className="pointer-events-auto flex w-full max-w-md gap-1.5 lg:hidden">
+            {quickBuys.map((u) => {
+              const cost = costOf(u.baseCost, owned[u.id] || 0);
+              return (
+                <button key={u.id} onClick={() => buy(u.id, u.baseCost)} title={u.name} className="grow-item flex min-w-0 flex-1 items-center justify-center gap-1.5 px-2 py-1.5">
+                  <span className="text-lg leading-none">{u.emoji}</span>
+                  <span className="truncate font-pixel text-[11px] text-wood">{formatParams(cost)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         {/* mobile section tabs */}
         <div className="pointer-events-auto flex w-full max-w-md gap-1.5 lg:hidden">
           {MOBILE_TABS.map((t) => (
