@@ -5,16 +5,12 @@ import { useState } from "react";
 /**
  * Le Chaton Fat — the white chonky cat.
  *
- * Render priority:
- *   1. 5x2 fatness sprite sheet (public/sprites/cat-fatness-normalized.png),
- *      one frame per fatness level — generate with `npm run sprites` from a
- *      5x2 source. Frame chosen from `fat` (0 skinny -> 9 absolute unit).
- *   2. single trimmed sprite (public/sprites/cat.png), squished narrower when
- *      skinny so a single image still reads skinny -> fat.
- *   3. CSS fallback cat.
- *
- * It quietly upgrades: drop a real 5x2 sheet in and re-run the script and the
- * component switches to per-frame fatness automatically.
+ * Renders one frame of the 5x2 fatness sprite sheet
+ * (public/sprites/cat-fatness-normalized.png) as a background-image — chosen by
+ * `fat` (0 skinny -> 9 absolute unit). Using a background-image (not an <img>)
+ * means no loading-placeholder box flashes in before it paints.
+ * Falls back to a CSS-drawn cat only if the sheet is genuinely missing (404).
+ * Generate/refresh the sheet with `npm run sprites` from a 5x2 source.
  */
 
 export const COLS = 5;
@@ -24,20 +20,19 @@ export const FRAME_HEIGHT = 512;
 export const FRAME_COUNT = COLS * ROWS;
 
 const SHEET = "/sprites/cat-fatness-normalized.png";
-const SINGLE = "/sprites/cat.png";
 const TILE = 232;
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 export default function Cat({ fat = 0, stageIndex = 0 }: { fat?: number; stageIndex?: number }) {
-  const [sheetOk, setSheetOk] = useState(false);
-  const [singleFailed, setSingleFailed] = useState(false);
+  // Only fall back to the CSS cat if the sheet genuinely 404s — never flash a
+  // placeholder. The sheet renders as a background-image (no <img> loading box).
+  const [missing, setMissing] = useState(false);
   const f = Math.max(0, Math.min(1, fat));
   const glow = stageIndex >= 4;
 
   const frame = Math.round(f * (FRAME_COUNT - 1));
   const col = frame % COLS;
   const row = Math.floor(frame / COLS);
-  const squish = lerp(0.72, 1, f); // slim when skinny, full when chonky
 
   return (
     <div className="animate-breathe" style={{ position: "relative", width: TILE, height: TILE }}>
@@ -65,7 +60,9 @@ export default function Cat({ fat = 0, stageIndex = 0 }: { fat?: number; stageIn
         />
       )}
 
-      {sheetOk ? (
+      {missing ? (
+        <FallbackCat fat={f} />
+      ) : (
         <div
           style={{
             width: TILE,
@@ -77,30 +74,11 @@ export default function Cat({ fat = 0, stageIndex = 0 }: { fat?: number; stageIn
             imageRendering: "pixelated",
           }}
         />
-      ) : singleFailed ? (
-        <FallbackCat fat={f} />
-      ) : (
-        // primary: the real single sprite, squished narrower when skinny
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={SINGLE}
-          alt="Le Chaton Fat"
-          onError={() => setSingleFailed(true)}
-          style={{
-            width: TILE,
-            height: TILE,
-            objectFit: "contain",
-            objectPosition: "center bottom",
-            imageRendering: "pixelated",
-            transform: `scaleX(${squish})`,
-            transformOrigin: "center bottom",
-          }}
-        />
       )}
 
-      {/* probe: upgrade to the 5x2 fatness sheet if/when it exists */}
+      {/* hidden probe — only swaps to the CSS fallback if the sheet is missing */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={SHEET} alt="" aria-hidden onLoad={() => setSheetOk(true)} style={{ display: "none" }} />
+      <img src={SHEET} alt="" aria-hidden onError={() => setMissing(true)} style={{ display: "none" }} />
     </div>
   );
 }

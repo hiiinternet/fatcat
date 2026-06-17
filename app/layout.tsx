@@ -41,6 +41,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${gameFont.variable} h-full antialiased`}>
+      <head>
+        {/* preload the first-screen art so there's no load flash */}
+        <link rel="preload" as="image" href="/cafe-bg.png" />
+        <link rel="preload" as="image" href="/sprites/cat-fatness-normalized.png" />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

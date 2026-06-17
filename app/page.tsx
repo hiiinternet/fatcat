@@ -416,7 +416,7 @@ export default function LeChatonFat() {
     <MotionConfig reducedMotion="user">
     <div className="relative h-dvh w-full select-none overflow-hidden">
       {/* ===== Background — crossfades as the cat outgrows each view ===== */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-[#1a1226]">
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#e9c9b6]">
         <AnimatePresence>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <motion.img
