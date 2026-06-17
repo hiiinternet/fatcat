@@ -47,6 +47,7 @@ type SaveState = {
 type Particle = { id: number; emoji: string; dx: number; dy: number; rot: number };
 type Floater = { id: number; text: string; x: number };
 type Toast = { key: number; achId: string };
+type Confetti = { id: number; left: number; delay: number; dur: number; rot: number; emoji: string };
 type SheetId = "upgrades" | "stats" | "bench" | "awards";
 
 // ---------------------------------------------------------------------------
@@ -65,7 +66,8 @@ export default function LeChatonFat() {
   const [infoTab, setInfoTab] = useState<SheetId>("stats");
   const [sheet, setSheet] = useState<SheetId | null>(null);
   const [zoomie, setZoomie] = useState<{ id: number; top: number; left: number } | null>(null);
-  const [celebrate, setCelebrate] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState<{ name: string; idx: number; final: boolean } | null>(null);
+  const [confetti, setConfetti] = useState<Confetti[]>([]);
   const prevStageRef = useRef(-1);
 
   const [quote, setQuote] = useState<{ text: string; key: number } | null>(null);
@@ -226,11 +228,26 @@ export default function LeChatonFat() {
   useEffect(() => {
     if (!mounted) return;
     if (prevStageRef.current >= 0 && stageIdx > prevStageRef.current) {
-      setCelebrate(STAGES[stageIdx].name);
+      const isFinal = stageIdx >= STAGES.length - 1;
+      setCelebrate({ name: STAGES[stageIdx].name, idx: stageIdx, final: isFinal });
       catControls.start(CAT_BOUNCE);
+      // confetti rain — a downpour for the 30T finale
+      const emojis = isFinal
+        ? ["🎉", "✨", "⭐", "🌟", "💫", "🟠", "👑", "🐱", "🥐", "🎊"]
+        : ["🎉", "✨", "⭐", "🥐", "💫", "🐱"];
+      const count = isFinal ? 90 : 30;
+      const pieces: Confetti[] = Array.from({ length: count }, () => ({
+        id: idRef.current++,
+        left: Math.random() * 100,
+        delay: Math.random() * (isFinal ? 1.1 : 0.5),
+        dur: 2.4 + Math.random() * 1.8,
+        rot: (Math.random() - 0.5) * 900,
+        emoji: emojis[Math.floor(Math.random() * emojis.length)],
+      }));
+      setConfetti((c) => [...c, ...pieces].slice(-160));
       prevStageRef.current = stageIdx;
       const q = setTimeout(() => say(STAGE_QUOTES[stageIdx] ?? "State of the art."), 700);
-      const t = setTimeout(() => setCelebrate(null), 2800);
+      const t = setTimeout(() => setCelebrate(null), isFinal ? 6500 : 2800);
       return () => {
         clearTimeout(q);
         clearTimeout(t);
@@ -600,21 +617,57 @@ export default function LeChatonFat() {
         )}
       </AnimatePresence>
 
+      {/* ===== Confetti rain ===== */}
+      <div className="pointer-events-none fixed inset-0 z-[46] overflow-hidden">
+        <AnimatePresence>
+          {confetti.map((p) => (
+            <motion.div
+              key={p.id}
+              initial={{ y: "-8vh", opacity: 0, rotate: 0 }}
+              animate={{ y: "108vh", opacity: [0, 1, 1, 1], rotate: p.rot }}
+              transition={{ duration: p.dur, delay: p.delay, ease: "easeIn" }}
+              onAnimationComplete={() => setConfetti((c) => c.filter((x) => x.id !== p.id))}
+              style={{ left: `${p.left}vw`, top: 0, position: "absolute" }}
+              className="text-2xl drop-shadow-sm"
+            >
+              {p.emoji}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       {/* ===== Stage-up celebration ===== */}
       <AnimatePresence>
         {celebrate && (
+          <motion.div key="flash" initial={{ opacity: 0 }} animate={{ opacity: [0, celebrate.final ? 0.85 : 0.4, 0] }} exit={{ opacity: 0 }} transition={{ duration: celebrate.final ? 1.4 : 0.7, times: [0, 0.18, 1] }} className="pointer-events-none fixed inset-0 z-[44]" style={{ background: "radial-gradient(circle at 50% 42%, rgba(255,196,110,0.95), rgba(255,138,61,0.25) 55%, transparent 75%)" }} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {celebrate && (
           <motion.div
-            key={celebrate}
+            key={`celebrate-${celebrate.idx}`}
             initial={{ scale: 0.5, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.8, opacity: 0 }}
+            exit={{ scale: 0.85, opacity: 0 }}
             transition={SPRING.snappy}
-            className="pointer-events-none fixed inset-x-0 top-[28%] z-[48] flex justify-center px-4"
+            className="pointer-events-none fixed inset-x-0 top-[26%] z-[48] flex justify-center px-4"
           >
-            <div className="gframe px-6 py-4 text-center">
-              <p className="font-pixel text-[11px] uppercase tracking-[0.22em] text-ember">★ New Stage ★</p>
-              <p className="font-pixel text-2xl text-ink sm:text-3xl">{celebrate}</p>
-            </div>
+            {celebrate.final ? (
+              <div className="gframe relative max-w-md overflow-hidden px-7 py-6 text-center">
+                <div className="sheen pointer-events-none absolute inset-0 opacity-50" />
+                <motion.p animate={{ scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }} className="font-pixel text-[12px] uppercase tracking-[0.3em] text-ember">
+                  🏆 AGI Achieved 🏆
+                </motion.p>
+                <p className="mt-1 font-pixel text-3xl leading-tight text-ink sm:text-4xl">Cosmic Superintelligence</p>
+                <p className="mt-2 font-pixel text-[13px] text-wood">30T parameters · officially state of the art</p>
+                <p className="mt-1 text-[12px] italic text-muted">You turned a café cat into a frontier model. 🐱</p>
+              </div>
+            ) : (
+              <div className="gframe px-6 py-4 text-center">
+                <p className="font-pixel text-[11px] uppercase tracking-[0.22em] text-ember">★ Stage {celebrate.idx + 1} unlocked ★</p>
+                <p className="font-pixel text-2xl text-ink sm:text-3xl">{celebrate.name}</p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
