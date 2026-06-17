@@ -83,6 +83,38 @@ async function main() {
   const ch = info.channels; // 4
   const alphaAt = (x: number, y: number) => data[(y * W + x) * ch + (ch - 1)];
 
+  // --- Flood-fill background removal -------------------------------------
+  // Many exported sheets have the "transparency" baked in as an opaque light
+  // checkerboard. Flood from the borders through light pixels (luminance > T),
+  // stopping at each cat's darker outline, and zero out their alpha. The cats
+  // are islands enclosed by their outline, so they're preserved.
+  const T = 190;
+  const lumAt = (p: number) => 0.299 * data[p * ch] + 0.587 * data[p * ch + 1] + 0.114 * data[p * ch + 2];
+  const visited = new Uint8Array(W * H);
+  const stack: number[] = [];
+  const seed = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= W || y >= H) return;
+    const p = y * W + x;
+    if (visited[p] || lumAt(p) <= T) return;
+    visited[p] = 1;
+    stack.push(p);
+  };
+  for (let x = 0; x < W; x++) { seed(x, 0); seed(x, H - 1); }
+  for (let y = 0; y < H; y++) { seed(0, y); seed(W - 1, y); }
+  while (stack.length) {
+    const p = stack.pop()!;
+    const x = p % W;
+    const y = (p / W) | 0;
+    seed(x + 1, y);
+    seed(x - 1, y);
+    seed(x, y + 1);
+    seed(x, y - 1);
+  }
+  let cleared = 0;
+  for (let p = 0; p < W * H; p++) if (visited[p]) { data[p * ch + (ch - 1)] = 0; cleared++; }
+  console.log(`Flood-fill cleared ${cleared} background px (${Math.round((cleared / (W * H)) * 100)}%)`);
+  const cleaned = await sharp(data, { raw: { width: W, height: H, channels: ch } }).png().toBuffer();
+
   // --- split into 2 row bands by horizontal transparent gaps -------------
   const rowPresent: boolean[] = new Array(H);
   for (let y = 0; y < H; y++) {
@@ -137,7 +169,7 @@ async function main() {
   const scale = (FRAME - PAD * 2) / maxDim;
   console.log(`Largest cat ${maxDim}px → global scale ${scale.toFixed(3)}`);
 
-  const srcImg = sharp(await fs.readFile(INPUT)).ensureAlpha();
+  const srcImg = sharp(cleaned).ensureAlpha();
   const composites: sharp.OverlayOptions[] = [];
   for (let i = 0; i < boxes.length; i++) {
     const b = boxes[i];
